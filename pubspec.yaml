@@ -33,6 +33,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^0.13.4
+  path_provider: ^2.0.9
   webview_flutter: ^3.0.1
 
 dev_dependencies:

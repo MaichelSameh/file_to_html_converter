@@ -14,37 +14,38 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  File? file;
+  List<File>? file;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body:
-            // file == null ?
-            Center(
-                child: ElevatedButton(
-                    onPressed: () async {
-                      FilePickerResult? result = await FilePicker.platform
-                          .pickFiles(
-                              type: FileType.custom,
-                              allowedExtensions: AvailableExtensions.values
-                                  .map<String>((extension) => extension.name)
-                                  .toList());
-                      if (result != null) {
-                        file = await Converter().convert(
-                          AvailableExtensions.values.firstWhere((element) =>
-                              element.name ==
-                              result.files.first.path!.split(".").last),
-                          result.files.first.path!,
-                        );
-                        setState(() {});
-                      }
-                    },
-                    child: const Text("Select file")))
-        // : WebView(
-        //     onWebViewCreated: (controller) {
-        //       controller.loadFile(file!.absolute.path);
-        //     },
-        //   ),
-        );
+      body: file == null
+          ? Center(
+              child: ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result = await FilePicker.platform
+                        .pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: AvailableExtensions.values
+                                .map<String>((extension) => extension.name)
+                                .toList());
+                    if (result != null) {
+                      file = await Converter().convert(
+                        AvailableExtensions.values.firstWhere((element) =>
+                            element.name ==
+                            result.files.first.path!.split(".").last),
+                        result.files.first.path!,
+                      );
+                      setState(() {});
+                    }
+                  },
+                  child: const Text("Select file")))
+          : file![0].path.contains("txt", file![0].path.lastIndexOf("."))
+              ? Text(file![0].readAsStringSync())
+              : WebView(
+                  onWebViewCreated: (controller) {
+                    controller.loadFile(file![0].absolute.path);
+                  },
+                ),
+    );
   }
 }
