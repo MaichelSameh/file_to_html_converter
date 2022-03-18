@@ -25,28 +25,29 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: filePath == null || filePath?.isEmpty == true
-          ? Center(
-              child: ElevatedButton(
-                  onPressed: () async {
-                    FilePickerResult? result = await FilePicker.platform
-                        .pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: AvailableExtensions.values
-                                .map<String>((extension) => extension.name)
-                                .toList());
-                    if (result != null) {
-                      filePath = result.files.first.path;
-                      await Converter().convert(
-                        AvailableExtensions.values.firstWhere((element) =>
-                            element.name == filePath!.split(".").last),
-                        filePath!,
-                      );
-                      setState(() {});
-                    }
-                  },
-                  child: const Text("Select file")))
-          : const SizedBox(),
-    );
+        body:
+            // filePath == null || filePath?.isEmpty == true?
+            Center(
+                child: ElevatedButton(
+                    onPressed: () async {
+                      FilePickerResult? result = await FilePicker.platform
+                          .pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: AvailableExtensions.values
+                                  .map<String>((extension) => extension.name)
+                                  .toList());
+                      if (result != null) {
+                        filePath = result.files.first.path;
+                        await Converter().convert(
+                          AvailableExtensions.values.firstWhere((element) =>
+                              element.name == filePath!.split(".").last),
+                          filePath!,
+                        );
+                        setState(() {});
+                      }
+                    },
+                    child: const Text("Select file")))
+        // : const SizedBox(),
+        );
   }
 }
