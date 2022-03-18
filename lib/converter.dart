@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 
-enum AvailableExtensions { doc, docs, ppt, pptx, txt }
+enum AvailableExtensions { doc, docs, ppt, pptx, txt, pdf }
 
 class Converter {
   Future<File> convert(AvailableExtensions extension, String filePath) async {
     try {
+      if (extension == AvailableExtensions.pdf) {
+        return convertPdf(filePath);
+      }
       TaskSnapshot ff = await FirebaseStorage.instance
           .ref('''temp/${filePath.split("/").last}''').putFile(File(filePath));
       String fileUtl = await ff.ref.getDownloadURL();
@@ -27,7 +30,27 @@ class Converter {
         throw data["Message"];
       }
     } catch (error) {
+      // ignore: avoid_print
       print("Error occurred while converting your file. \nerror: $error");
+      rethrow;
+    }
+  }
+
+  Future<File> convertPdf(String filePath) async {
+    try {
+      Uri link = Uri.https(
+        "pdftables.com",
+        "/api",
+        {"key": "", "format": "html"},
+      );
+      http.MultipartRequest req = http.MultipartRequest("POST", link)
+        ..files.add(await http.MultipartFile.fromPath("file", filePath));
+      http.StreamedResponse res = await req.send();
+      print(res.statusCode);
+      http.Response resData = await http.Response.fromStream(res);
+      print(resData.body);
+      return File("");
+    } catch (error) {
       rethrow;
     }
   }
