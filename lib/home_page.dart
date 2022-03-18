@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter/material.dart';
 
 import 'converter.dart';
+import 'files_grid_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -14,38 +14,39 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<File>? file;
+  List<File>? files;
+  bool isLoading = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: file == null
-          ? Center(
-              child: ElevatedButton(
-                  onPressed: () async {
-                    FilePickerResult? result = await FilePicker.platform
-                        .pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: AvailableExtensions.values
-                                .map<String>((extension) => extension.name)
-                                .toList());
-                    if (result != null) {
-                      file = await Converter().convert(
-                        AvailableExtensions.values.firstWhere((element) =>
-                            element.name ==
-                            result.files.first.path!.split(".").last),
-                        result.files.first.path!,
-                      );
-                      setState(() {});
-                    }
-                  },
-                  child: const Text("Select file")))
-          : file![0].path.contains("txt", file![0].path.lastIndexOf("."))
-              ? Text(file![0].readAsStringSync())
-              : WebView(
-                  onWebViewCreated: (controller) {
-                    controller.loadFile(file![0].absolute.path);
-                  },
-                ),
-    );
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : files == null
+                ? Center(
+                    child: ElevatedButton(
+                        onPressed: () async {
+                          setState(() {
+                            isLoading = true;
+                          });
+                          FilePickerResult? result = await FilePicker.platform
+                              .pickFiles(
+                                  type: FileType.custom,
+                                  allowedExtensions: AvailableExtensions.values
+                                      .map<String>(
+                                          (extension) => extension.name)
+                                      .toList());
+                          if (result != null) {
+                            files = await Converter().convert(
+                              AvailableExtensions.values.firstWhere((element) =>
+                                  element.name ==
+                                  result.files.first.path!.split(".").last),
+                              result.files.first.path!,
+                            );
+                            isLoading = false;
+                            setState(() {});
+                          }
+                        },
+                        child: const Text("Select file")))
+                : FilesGridScreen(pages: files!));
   }
 }
