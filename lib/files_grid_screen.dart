@@ -18,7 +18,6 @@ class _FilesGridScreenState extends State<FilesGridScreen> {
   List<int> indexes = <int>[];
   @override
   Widget build(BuildContext context) {
-    print(widget.pages.length);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black.withOpacity(0.3),

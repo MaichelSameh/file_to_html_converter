@@ -3,77 +3,137 @@ import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart' as path_provider;
 
 enum AvailableExtensions { doc, docx, ppt, pptx, txt, pdf }
 
 class Converter {
-  Future<List<File>> convert(
+  Future<List<String>> convert(
       AvailableExtensions extension, String filePath) async {
-    if (extension == AvailableExtensions.txt) {
-      return [File(filePath)];
-    }
     try {
-      TaskSnapshot ff = await FirebaseStorage.instance
-          .ref('''temp/${filePath.split("/").last}''').putFile(File(filePath));
-      String fileUrl = await ff.ref.getDownloadURL();
-      Uri link = Uri.https(
-          "v2.convertapi.com",
-          "/convert/${extension.name}/to/${extension == AvailableExtensions.pdf ? "txt" : extension == AvailableExtensions.ppt || extension == AvailableExtensions.pptx ? "pdf" : "html"}",
-          {
-            "File": fileUrl,
-            "Secret": "KbYoRiVe8L5Kq3ot",
-          });
-      print(link);
-      var res = await http.post(link);
-      await FirebaseStorage.instance.refFromURL(fileUrl).delete();
-      Map<String, dynamic> data = json.decode(res.body);
-      if (res.statusCode == 200) {
-        List<dynamic> files = data["Files"];
-        List<File> htmlFiles = <File>[];
-        if (extension == AvailableExtensions.ppt ||
-            extension == AvailableExtensions.pptx) {
-          htmlFiles.add(
-              File(filePath.substring(0, filePath.lastIndexOf(".")) + ".pdf"));
-        }
-        print(files.length);
-        for (int i = 0; i < files.length; i++) {
-          if (extension == AvailableExtensions.ppt ||
-              extension == AvailableExtensions.pptx) {
-            print(base64.decode(files[i]["FileData"]));
-            print(utf8.encode(files[i]["FileData"]));
-            htmlFiles[0] = await htmlFiles[0].writeAsBytes(
-              base64.decode(files[i]["FileData"]),
-              mode: FileMode.append,
-            );
-            print(htmlFiles[0].readAsStringSync());
-          } else {
-            List<String> list = filePath.split("/");
-            list.last = list.last.substring(0, list.last.lastIndexOf(".")) +
-                "$i." +
-                (extension == AvailableExtensions.pdf ? "txt" : "html");
-            Directory dir =
-                await path_provider.getApplicationDocumentsDirectory();
-            filePath = dir.path + list.last;
-            htmlFiles.add(await File(filePath)
-                .writeAsBytes(base64.decode(files[i]["FileData"])));
-          }
-        }
-        if (extension == AvailableExtensions.ppt ||
-            extension == AvailableExtensions.pptx) {
-          await htmlFiles[0].create();
-          print(filePath);
-          return await convert(AvailableExtensions.pdf, filePath);
-        } else {
-          return htmlFiles;
-        }
-      } else {
-        throw data["Message"];
+      String cloudConvertToken = "";
+      String fileName = filePath.split("/").last;
+      TaskSnapshot task = await FirebaseStorage.instance
+          .ref("temp/$fileName")
+          .putFile(File(filePath));
+      String fileLink = await task.ref.getDownloadURL();
+      Uri link = Uri.parse("https://api.cloudconvert.com/v2/jobs");
+      Map<String, dynamic> headerParameters = {};
+      switch (extension) {
+        case AvailableExtensions.doc:
+          headerParameters = {
+            "engine": "office",
+          };
+          break;
+        case AvailableExtensions.docx:
+          headerParameters = {
+            "engine": "office",
+          };
+          break;
+        case AvailableExtensions.ppt:
+          headerParameters = {
+            "engine": "libreoffice",
+            "embed_images": false,
+          };
+          break;
+        case AvailableExtensions.pptx:
+          headerParameters = {
+            "engine": "libreoffice",
+            "embed_images": false,
+          };
+          break;
+        case AvailableExtensions.txt:
+          headerParameters = {
+            "engine": "libreoffice",
+            "embed_images": false,
+          };
+          break;
+        case AvailableExtensions.pdf:
+          headerParameters = {
+            "outline": false,
+            "zoom": 1.5,
+            "embed_css": true,
+            "embed_javascript": true,
+            "embed_images": true,
+            "embed_fonts": true,
+            "split_pages": true,
+            "bg_format": "png",
+            "engine": "pdf2htmlex",
+          };
+          break;
       }
+      http.Response res = await http.post(
+        link,
+        headers: {
+          "Content-Type": "application/json",
+          // "Accept": "application/json",
+          "Authorization": "Bearer $cloudConvertToken",
+          // "Connection": "keep-alive",
+          // "Accept-Encoding": "gzip, deflate, br",
+        },
+        body: json.encode({
+          "tasks": {
+            "file": {
+              "operation": "import/url",
+              "url": fileLink,
+              "filename": fileName,
+            },
+            "task-1": {
+              "operation": "convert",
+              "input_format": extension.name,
+              "output_format": "html",
+              "input": ["file"],
+              ...headerParameters
+            }
+          },
+          "export-1": {
+            "operation": "export/url",
+            "input": ["task-1"]
+          },
+          "tag": "Converter",
+        }),
+      );
+      await FirebaseStorage.instance.refFromURL(fileLink).delete();
+      Map<String, dynamic> resData = json.decode(res.body);
+      print(resData);
+      print(res.statusCode);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        link = Uri.parse(
+            (resData["data"]["tasks"] as List<dynamic>).last["links"]["self"]);
+        resData = await getEcportedFile(link, cloudConvertToken);
+        print(resData);
+        if (resData["data"]["result"] != null) {
+          String fileUrl = (resData["data"]["result"]["files"] as List<dynamic>)
+                  .first["url"] ??
+              "";
+          print(fileUrl);
+        }
+      }
+      return [" "];
     } catch (error) {
       // ignore: avoid_print
       print("Error occurred while converting your file. \nerror: $error");
       rethrow;
     }
+  }
+
+  Future<Map<String, dynamic>> getEcportedFile(
+    Uri link,
+    String cloudConvertToken,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    http.Response res = await http.get(
+      link,
+      headers: {
+        "Content-Type": "application/json",
+        // "Accept": "application/json",
+        "Authorization": "Bearer $cloudConvertToken",
+      },
+    );
+    Map<String, dynamic> resData = json.decode(res.body);
+    if (resData["data"]["status"] == "waiting" ||
+        resData["data"]["status"] == "processing") {
+      return await getEcportedFile(link, cloudConvertToken);
+    }
+    return resData;
   }
 }

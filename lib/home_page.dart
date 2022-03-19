@@ -36,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           (extension) => extension.name)
                                       .toList());
                           if (result != null) {
-                            files = await Converter().convert(
+                            await Converter().convert(
                               AvailableExtensions.values.firstWhere((element) =>
                                   element.name ==
                                   result.files.first.path!.split(".").last),
