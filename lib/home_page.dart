@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import 'converter.dart';
 import 'files_grid_screen.dart';
@@ -36,24 +35,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                     .map<String>((extension) => extension.name)
                                     .toList());
                         if (result != null) {
-                          files = [
-                            await Converter().convert(
-                              AvailableExtensions.values.firstWhere((element) =>
-                                  element.name ==
-                                  result.files.first.path!.split(".").last),
-                              result.files.first.path!,
-                            )
-                          ];
+                          files = await Converter().convert(
+                            AvailableExtensions.values.firstWhere((element) =>
+                                element.name ==
+                                result.files.first.path!.split(".").last),
+                            result.files.first.path!,
+                          );
                           isLoading = false;
                           setState(() {});
                         }
                       },
                       child: const Text("Select file")))
-              : WebView(
-                  onWebViewCreated: (controller) {
-                    controller.loadFile(files![0].absolute.path);
-                  },
-                ),
+              : FilesGridScreen(pages: files!),
     );
   }
 }
