@@ -8,14 +8,14 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 import 'api_keys.dart';
 import 'splits.dart';
 
-///this enum is contiening all the extensions to be picked from the device
+///this enum is containing all the extensions to be picked from the device
 enum AvailableExtensions { doc, docx, ppt, pptx, txt, pdf }
 
-///this enum is contiening all the extensions that the api can convert to the picked file
+///this enum is containing all the extensions that the api can convert to the picked file
 enum ConvertToExtensions { html }
 
 class Converter {
-  ///this function is responsalble to convert any selected file by the extension
+  ///this function is responsible to convert any selected file by the extension
   ///to one of [ConvertToExtensions]
   Future<List<File>> convert(
     AvailableExtensions extension,
@@ -41,8 +41,8 @@ class Converter {
       Map<String, dynamic> headerParameters = {};
       //the engine that will be used to convert th file
       Map<String, dynamic> engine = {};
-      //in this switch statment we are generating the header by extension
-      //as each extension can have a diffrent parameters or diffrent engin
+      //in this switch statement we are generating the header by extension
+      //as each extension can have a different parameters or different engin
       switch (extension) {
         case AvailableExtensions.doc:
           headerParameters = {
@@ -101,7 +101,7 @@ class Converter {
           //declaring the response body encoding
           "Accept": "application/json",
           //the authorization key
-          "Authorization": "Bearer ${ApiKeys.sand_bo_key}",
+          "Authorization": "Bearer ${ApiKeys.sand_box_key}",
         },
         body: json.encode({
           "tasks": {
@@ -140,8 +140,8 @@ class Converter {
         link = Uri.parse(
             (resData["data"]["tasks"] as List<dynamic>).last["links"]["self"]);
         //getting the export task response
-        resData = await getExportedFile(link, ApiKeys.sand_bo_key);
-        //checking if the export operation has reult(completed successflly)
+        resData = await getExportedFile(link, ApiKeys.sand_box_key);
+        //checking if the export operation has result(completed successfully)
         if (resData["data"]["result"] != null) {
           //getting the download link from the response
           String fileUrl = (resData["data"]["result"]["files"] as List<dynamic>)
@@ -178,7 +178,7 @@ class Converter {
     //the cloud convert auth token
     String cloudConvertToken,
   ) async {
-    //waiting for some time so the caonversion operation is completed
+    //waiting for some time so the conversion operation is completed
     await Future.delayed(const Duration(milliseconds: 300));
     //sending a check request to get the export response
     http.Response res = await http.get(
@@ -189,7 +189,7 @@ class Converter {
         "Authorization": "Bearer $cloudConvertToken",
       },
     );
-    //decodeing the response body
+    //decoding the response body
     Map<String, dynamic> resData = json.decode(res.body);
     //checking if the process isn't finished yet
     if (resData["data"]["status"] == "waiting" ||
@@ -200,7 +200,7 @@ class Converter {
     return resData;
   }
 
-  ///this function will doenload the files in a temporary directory from
+  ///this function will download the files in a temporary directory from
   ///the given [fileLink] and will store it with the name [fileName]
   Future<File> downloadFile(String fileLink, String fileName) async {
     //fetching the image from the internet
@@ -213,7 +213,7 @@ class Converter {
     await Directory(filePath).create(recursive: true);
     //creating the file
     File file = File(filePath + "/" + fileName);
-    //writing the file cointent
+    //writing the file content
     file.writeAsBytesSync(res.bodyBytes);
     return file;
   }

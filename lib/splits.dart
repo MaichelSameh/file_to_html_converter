@@ -72,6 +72,7 @@ class Splits {
         //writing the page in a new file
         result.add(await File(dir.path + "page$pageCount.html")
             .writeAsString(header.join("\n") + page + footer.join("\n")));
+        pageCount++;
       } while (repeat);
     } else {
       do {
@@ -96,6 +97,7 @@ class Splits {
         //writing the page in a new file
         result.add(await File(dir.path + "page$pageCount.html")
             .writeAsString(header.join("\n") + page + footer.join("\n")));
+        ++pageCount;
       }
       //this loop will stop when the file is empty only
       while (initialData.isNotEmpty);
