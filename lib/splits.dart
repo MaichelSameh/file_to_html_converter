@@ -33,19 +33,22 @@ class Splits {
         initialData.length);
     //checking if it's a pdf file
     if (header[1].contains("pdf")) {
-      //removing the loading indicator
+      //removing any tags before the pages tags
       initialData.removeRange(
+          0,
           initialData
-              .indexWhere((element) => element.contains("loading-indicator")),
-          initialData.indexWhere(
-                  (element) => element.contains("loading-indicator")) +
-              2);
+              .indexWhere((element) => element.contains("page-container")));
+      // removing any tags after the pages tags
+      initialData.removeRange(
+          (initialData.lastIndexWhere((element) => element.contains("</div")) +
+              1),
+          initialData.length);
       //adding the page the page-container opening div to the header
       header.add(initialData.first);
       //removing the page the page-container div
       initialData.removeAt(0);
       //adding the page the page-container closing div to the footer
-      footer.add(initialData.last);
+      // footer.insert(0, initialData.last);
       //removing the page the page-container closing div
       initialData.removeLast();
       //this variable will control the do while loop
@@ -55,7 +58,8 @@ class Splits {
         //so it will stop the loop if the condition is not satisfied
         repeat = false;
         //checking if there are any pages in the file
-        if (initialData.any((element) => element.contains("pf$pageCount"))) {
+        if (initialData
+            .any((element) => element.contains("pf${pageCount + 1}"))) {
           repeat = true;
         }
         //getting the index of the end of the page
@@ -64,14 +68,15 @@ class Splits {
         //extracting the page
         String page = initialData
             .getRange(0, (index <= 0 ? initialData.length : index))
-            .join("\n");
+            .join("\n")
+            .replaceFirst("pc ", "");
         //removing the extracted page from the file
         initialData.removeRange(0, (index < 0 ? initialData.length : index));
         //getting a temporary directory
         Directory dir = await path_provider.getTemporaryDirectory();
         //writing the page in a new file
-        result.add(await File(dir.path + "page$pageCount.html")
-            .writeAsString(header.join("\n") + page + footer.join("\n")));
+        result.add(await File(dir.path + "/page$pageCount.html").writeAsString(
+            header.join("\n") + "\n" + page + "\n" + footer.join("\n")));
         pageCount++;
       } while (repeat);
     } else {
@@ -95,14 +100,13 @@ class Splits {
         //generating a temporary directory
         Directory dir = await path_provider.getTemporaryDirectory();
         //writing the page in a new file
-        result.add(await File(dir.path + "page$pageCount.html")
+        result.add(await File(dir.path + "/page$pageCount.html")
             .writeAsString(header.join("\n") + page + footer.join("\n")));
         ++pageCount;
       }
       //this loop will stop when the file is empty only
       while (initialData.isNotEmpty);
     }
-
     return result;
   }
 

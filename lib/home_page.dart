@@ -21,32 +21,39 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : files == null
-              ? Center(
-                  child: ElevatedButton(
-                      onPressed: () async {
-                        setState(() {
-                          isLoading = true;
-                        });
-                        FilePickerResult? result = await FilePicker.platform
-                            .pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: AvailableExtensions.values
-                                    .map<String>((extension) => extension.name)
-                                    .toList());
-                        if (result != null) {
-                          files = await Converter().convert(
-                            AvailableExtensions.values.firstWhere((element) =>
-                                element.name ==
-                                result.files.first.path!.split(".").last),
-                            result.files.first.path!,
-                          );
-                          isLoading = false;
-                          setState(() {});
-                        }
-                      },
-                      child: const Text("Select file")))
-              : FilesGridScreen(pages: files!),
+          : Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    isLoading = true;
+                  });
+                  FilePickerResult? result = await FilePicker.platform
+                      .pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: AvailableExtensions.values
+                              .map<String>((extension) => extension.name)
+                              .toList());
+                  if (result != null) {
+                    files = await Converter().convert(
+                      AvailableExtensions.values.firstWhere((element) =>
+                          element.name ==
+                          result.files.first.path!.split(".").last),
+                      result.files.first.path!,
+                    );
+                    isLoading = false;
+                    setState(() {});
+                    if (files != null || files?.isNotEmpty == true) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FilesGridScreen(pages: files!),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text("Select file"),
+              ),
+            ),
     );
   }
 }

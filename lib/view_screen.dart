@@ -48,31 +48,6 @@ class _ViewScreenState extends State<ViewScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Visibility(
-                        visible: currentPage < widget.pages.length - 1,
-                        child: InkWell(
-                          onTap: () {
-                            pageController.animateToPage(currentPage + 1,
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeIn);
-                            setState(() {
-                              ++currentPage;
-                            });
-                          },
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              borderRadius:
-                                  const BorderRadiusDirectional.horizontal(
-                                      start: Radius.circular(50)),
-                            ),
-                            child: const Icon(Icons.arrow_back_ios,
-                                color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      Visibility(
                         visible: currentPage > 0,
                         child: InkWell(
                           onTap: () {
@@ -97,6 +72,31 @@ class _ViewScreenState extends State<ViewScreen> {
                           ),
                         ),
                       ),
+                      Visibility(
+                        visible: currentPage < widget.pages.length - 1,
+                        child: InkWell(
+                          onTap: () {
+                            pageController.animateToPage(currentPage + 1,
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeIn);
+                            setState(() {
+                              ++currentPage;
+                            });
+                          },
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius:
+                                  const BorderRadiusDirectional.horizontal(
+                                      start: Radius.circular(50)),
+                            ),
+                            child: const Icon(Icons.arrow_forward_ios,
+                                color: Colors.white),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -107,8 +107,9 @@ class _ViewScreenState extends State<ViewScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 80),
                     child: SizedBox(
-                      height: 250,
+                      height: 100,
                       child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         itemBuilder: (ctx, index) => InkWell(
                           onTap: () {
@@ -119,15 +120,26 @@ class _ViewScreenState extends State<ViewScreen> {
                               currentPage = index;
                             });
                           },
-                          child: SizedBox(
-                            height: 200,
-                            width: 150,
-                            child: WebView(
-                              onWebViewCreated: (controller) {
-                                controller.loadFile(
-                                    widget.pages[index].absolute.path);
-                              },
-                            ),
+                          child: Stack(
+                            children: [
+                              SizedBox(
+                                height: 100,
+                                width: 80,
+                                child: WebView(
+                                  onWebViewCreated: (controller) {
+                                    controller.loadFile(
+                                        widget.pages[index].absolute.path);
+                                  },
+                                ),
+                              ),
+                              Container(
+                                height: 100,
+                                width: 80,
+                                color: currentPage == index
+                                    ? Colors.blueAccent.withOpacity(0.3)
+                                    : Colors.black.withOpacity(0.3),
+                              ),
+                            ],
                           ),
                         ),
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
